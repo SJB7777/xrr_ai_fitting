@@ -1,28 +1,13 @@
-import matplotlib
-matplotlib.use('Agg')
+import plotly.graph_objects as go
 
-import matplotlib.pyplot as plt
-import matplotlib.patheffects as path_effects
-import base64
-from io import BytesIO
-
-
-def generate_film_stack_image(layers_data, view_angle="iso"):
+def generate_film_stack_figure(layers_data, view_angle="iso"):
     """
-    layers_data: Dash DataTable의 data format
-    [
-        {"layer": "SiO₂", "thickness": "10.0", ...},
-        {"layer": "Cr", "thickness": "5.0", ...},
-    ]
+    Plotly Mesh3d를 사용하여 박막 적층 구조를 3D로 시각화합니다.
     """
-    fig = plt.figure(figsize=(8, 10), facecolor='#0a0f1c')
-    ax = fig.add_subplot(111, projection='3d')
-
-    # 배경 투명화
-    ax.set_facecolor('#0a0f1c')
-    ax.xaxis.set_pane_color((0.0, 0.0, 0.0, 0.0))
-    ax.yaxis.set_pane_color((0.0, 0.0, 0.0, 0.0))
-    ax.zaxis.set_pane_color((0.0, 0.0, 0.0, 0.0))
+    fig = go.Figure()
+    
+    if not layers_data:
+        return fig
 
     # 색상 매핑
     colors = {
@@ -31,52 +16,57 @@ def generate_film_stack_image(layers_data, view_angle="iso"):
         "Ta₂O₅": "#f15bb5", "default": "#6c757d"
     }
 
-    z_offset = 0
-    for i, layer in enumerate(layers_data):
+    z_current = 0
+    
+    # 바닥부터 쌓기 위해 역순 처리 혹은 인덱스 조정 (여기선 순서대로 쌓음)
+    for layer in reversed(layers_data):
         name = layer["layer"].split()[0]
-        thickness_str = layer["thickness"]
+        try:
+            thickness = float(layer["thickness"]) if layer["thickness"] != "∞" else 20.0
+        except (ValueError, TypeError):
+            thickness = 10.0
 
-        # 두께 처리
-        if thickness_str == "∞":
-            thickness = 20  # 기준
-        else:
-            thickness = float(thickness_str)
-
-        # 3D 바 생성
-        ax.bar3d(-2.5, -2.5, z_offset, 5, 5, thickness,
-                color=colors.get(name, colors["default"]),
-                alpha=0.85, edgecolor='white', linewidth=0.8)
-
-        # 레이블
-        if thickness > 2:
-            ax.text(0, 0, z_offset + thickness/2,
-                    f'{name}\n{thickness_str} nm',
-                    color='white', fontsize=9, ha='center', va='center',
-                    fontweight='bold',
-                    path_effects=[path_effects.withStroke(linewidth=1.5, foreground="black")])  # ✅ 수정
+        color = colors.get(name, colors["default"])
         
-        z_offset += thickness
+        # 육면체 생성 (x, y: -5~5)
+        x = [-5, -5, 5, 5, -5, -5, 5, 5]
+        y = [-5, 5, 5, -5, -5, 5, 5, -5]
+        z = [z_current, z_current, z_current, z_current, 
+             z_current + thickness, z_current + thickness, z_current + thickness, z_current + thickness]
+        
+        # Mesh3d의 i, j, k 인덱스 (육면체의 12개 삼각형 면)
+        fig.add_trace(go.Mesh3d(
+            x=x, y=y, z=z,
+            i=[7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+            j=[3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+            k=[0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+            color=color,
+            opacity=0.9,
+            name=f"{name} ({thickness}nm)",
+            flatshading=True,
+            showscale=False
+        ))
+        
+        z_current += thickness
 
-    # 축 설정
-    ax.set_zlim(0, max(z_offset, 60))
-    ax.set_xlim(-3, 3)
-    ax.set_ylim(-3, 3)
-    ax.set_axis_off()
-
-    # 시점
+    # 카메라 시점 설정
+    camera = dict(eye=dict(x=1.5, y=1.5, z=1.5))
     if view_angle == "top":
-        ax.view_init(elev=90, azim=0)
+        camera = dict(eye=dict(x=0, y=0, z=2.5), up=dict(x=0, y=1, z=0))
     elif view_angle == "side":
-        ax.view_init(elev=0, azim=-90)
-    else:
-        ax.view_init(elev=25, azim=-135)
+        camera = dict(eye=dict(x=2.5, y=0, z=0))
 
-    # 이미지 변환
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2,
-                facecolor='#0a0f1c', dpi=120)
-    plt.close(fig)
-    buf.seek(0)
-
-    encoded = base64.b64encode(buf.read()).decode()
-    return f"data:image/png;base64,{encoded}"
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            zaxis=dict(title="Thickness (nm)", range=[0, max(60, z_current)]),
+            camera=camera,
+            aspectmode='data'
+        ),
+        margin=dict(l=0, r=0, b=0, t=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False
+    )
+    return fig

@@ -1,6 +1,7 @@
-def main():
-    print("Hello from xrr-ai-fitting!")
+from app.run import run
 
+def main():
+    run()
 
 if __name__ == "__main__":
     main()

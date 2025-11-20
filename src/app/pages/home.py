@@ -5,57 +5,51 @@ dash.register_page(__name__, path="/")
 
 layout = html.Div(
     [
-        # 메인 컨테이너
         html.Div(
             [
-                html.H1("XRR Automated Fitting", style={"textAlign": "center"}),
+                html.H1("XRR Automated Fitting", style={"fontSize": "3rem", "marginBottom": "20px", "color": "#1e293b"}),
                 html.P(
-                    "Upload your XRR dataset and automatically estimate thin-film structure.",
-                    style={"textAlign": "center", "fontSize": "18px", "marginTop": "10px"},
+                    "AI-powered X-Ray Reflectivity Analysis Tool",
+                    style={"fontSize": "1.2rem", "color": "#64748b", "marginBottom": "40px"}
                 ),
                 
-                # 샘플 데이터 다운로드 버튼
-                html.Div(
+                html.Div([
+                    dcc.Link(
+                        "Start Analysis →",
+                        href="/xrr_app",
+                        className="btn-primary",
+                        style={"textDecoration": "none", "fontSize": "1.1rem", "padding": "15px 30px"}
+                    ),
                     html.A(
                         "Download Sample Data",
                         href="/assets/sample_data.txt",
-                        className="btn-main",
-                        style={"display": "inline-block", "marginTop": "20px"}
-                    ),
-                    style={"textAlign": "center"}
-                ),
+                        className="btn-secondary",
+                        style={"textDecoration": "none", "marginLeft": "15px", "padding": "15px 30px"}
+                    )
+                ], style={"display": "flex", "justifyContent": "center", "alignItems": "center"}),
 
-                # 시작 버튼
-                html.Div(
-                    dcc.Link(
-                        "Start →",
-                        href="/app",
-                        className="btn-next",
-                        style={"display": "inline-block", "marginTop": "20px"}
-                    ),
-                    style={"textAlign": "center"}
-                ),
-
-                # 간단한 안내 텍스트
-                html.Div(
-                    [
-                        html.H3("How to use", style={"marginTop": "40px"}),
-                        html.Ul(
-                            [
-                                html.Li("Upload your XRR dataset in CSV or TXT format."),
-                                html.Li("Adjust initial parameters or use auto-generated guesses."),
-                                html.Li("Run the fitting algorithm and visualize results."),
-                                html.Li("Download the fitted structure and SLD profile."),
-                            ],
-                            style={"fontSize": "16px"}
-                        ),
-                    ],
-                    style={"maxWidth": "600px", "margin": "40px auto"}
-                ),
+                # Feature List
+                html.Div([
+                    html.Div([
+                        html.H3("📁 Easy Upload"),
+                        html.P("Drag & drop support for .txt, .dat, .xy formats.")
+                    ], className="section", style={"padding": "20px", "flex": "1"}),
+                    
+                    html.Div([
+                        html.H3("🤖 AI Prediction"),
+                        html.P("Deep Learning model estimates initial parameters.")
+                    ], className="section", style={"padding": "20px", "flex": "1"}),
+                    
+                    html.Div([
+                        html.H3("📊 3D Visualization"),
+                        html.P("Interactive 3D film stack viewer.")
+                    ], className="section", style={"padding": "20px", "flex": "1"}),
+                ], style={"display": "flex", "gap": "20px", "marginTop": "60px", "textAlign": "left"})
+                
             ],
-            className="section",
-            style={"maxWidth": "900px", "margin": "50px auto", "padding": "30px"}
+            style={"maxWidth": "1000px", "margin": "0 auto", "textAlign": "center", "paddingTop": "80px"}
         )
     ],
-    className="main-container",
+    className="home-container",
+    style={"height": "100vh", "backgroundColor": "#f8fafc"}
 )
