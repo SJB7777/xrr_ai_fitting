@@ -159,10 +159,12 @@ def update_3d_view(layers_data, b1, b2, b3):
      Output("fourier-graph", "figure"),     # [추가] FFT 그래프
      Output("final-params-table", "data")],
     [Input("layers-table", "data"),
-     Input("xrr-data-store", "data")]
+     Input("xrr-data-store", "data"),
+     Input("input-wavelength", "value")]
 )
-def update_graphs_and_results(layers_data, uploaded_data):
-    # 1. 데이터 준비 (기존 동일)
+def update_graphs_and_results(layers_data, uploaded_data, wavelength):
+
+    wavelength = float(wavelength) if wavelength else 1.5406
     if uploaded_data:
         df = pd.DataFrame(uploaded_data)
         q_exp = df['q'].values

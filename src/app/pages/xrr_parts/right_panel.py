@@ -1,110 +1,93 @@
 from dash import html, dcc, dash_table
 from app.components.film_3d import generate_film_stack_figure
 from app.logic.materials import INITIAL_LAYERS
-import plotly.graph_objects as go
 
-def render_main_content():
+def render_right_panel():
     return html.Div([
         
-        # === Row 1: Reflectivity & Residual (기존 유지) ===
+        # 1. 3D Structure Viewer (상단)
         html.Div([
-            # 1. Main Graph
             html.Div([
-                html.H3([html.Span("📈"), " Reflectivity Data"]),
+                html.Span([html.Span("🧊"), " 3D Model"], style={'fontWeight': 'bold'}),
                 html.Div([
-                    dcc.Graph(
-                        id="reflectivity-graph",
-                        style={'height': '100%', 'width': '100%'},
-                        config={'displayModeBar': True, 'responsive': True}
-                    )
-                ], style={'flex': 1, 'position': 'relative', 'width': '100%', 'height': '100%'})
-            ], className="card-box flex-lg"),
-
-            # 2. Residual Graph
-            html.Div([
-                html.H3([html.Span("📉"), " Error Residual"]),
-                html.Div([
-                    dcc.Graph(
-                        id="residual-graph",
-                        style={'height': '100%', 'width': '100%'},
-                        config={'displayModeBar': False, 'responsive': True}
-                    )
-                ], style={'flex': 1, 'position': 'relative', 'width': '100%', 'height': '100%'})
-            ], className="card-box flex-sm"),
+                    html.Button("Top", id="btn-view-top", className="btn-secondary", style={'fontSize':'0.7rem', 'padding':'2px 6px'}),
+                    html.Button("Iso", id="btn-view-iso", className="btn-secondary", style={'fontSize':'0.7rem', 'padding':'2px 6px', 'marginLeft': '2px'}),
+                    html.Button("Side", id="btn-view-side", className="btn-secondary", style={'fontSize':'0.7rem', 'padding':'2px 6px', 'marginLeft': '2px'}),
+                ])
+            ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center', 'padding': '10px 15px', 'borderBottom': '1px solid #e2e8f0', 'background': '#f8fafc'}),
             
-        ], className="top-row"),
+            html.Div([
+                dcc.Graph(
+                    id="film-3d-image",
+                    figure=generate_film_stack_figure(INITIAL_LAYERS),
+                    style={'width': '100%', 'height': '100%'},
+                    config={'displayModeBar': False}
+                )
+            ], style={'flex': 1, 'minHeight': '300px'})
+            
+        ], className="card-box", style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
 
 
-        # === Row 2: Fourier + Structure + Parameters ===
+        # 2. Results & Comparison (하단 - 탭 이름 변경)
         html.Div([
+            html.H3([html.Span("📊"), " Results"]), # 타이틀 변경 (Parameters -> Results)
             
-            # 3. FFT Analysis
-            html.Div([
-                html.H3([html.Span("🌊"), " FFT Analysis"]),
-                html.Div([
-                    dcc.Graph(
-                        id="fourier-graph",
-                        style={'height': '100%', 'width': '100%'},
-                        config={'displayModeBar': False, 'responsive': True}
-                    )
-                ], style={'flex': 1, 'position': 'relative', 'width': '100%', 'height': '100%'})
-            ], className="card-box flex-1"),
+            dcc.Tabs([
+                # [수정] Tab 1: Final Fit (최종 결과)
+                dcc.Tab(
+                    label='🎯 Final Fit', 
+                    children=[
+                        html.Div([
+                            dash_table.DataTable(
+                                id='final-params-table',
+                                columns=[
+                                    {'name': 'Mat', 'id': 'layer'},
+                                    {'name': 'd(Å)', 'id': 'thickness'},
+                                    {'name': 'ρ', 'id': 'density'},
+                                    {'name': 'σ', 'id': 'roughness'},
+                                ],
+                                data=[], 
+                                style_cell={'textAlign': 'center', 'padding': '4px', 'fontSize': '0.8rem'},
+                                style_header={'backgroundColor': '#fff', 'fontWeight': 'bold', 'borderBottom': '2px solid #e2e8f0'},
+                                style_as_list_view=True
+                            ),
+                            html.Button("💾 Export CSV", id="btn-export", className="btn-primary", style={'marginTop': 'auto', 'padding': '8px'})
+                        ], style={'padding': '10px', 'display': 'flex', 'flexDirection': 'column', 'height': '100%'})
+                    ], 
+                    style={'borderBottom': '1px solid #e2e8f0'}, 
+                    selected_style={'borderBottom': '3px solid #2563eb', 'color': '#2563eb', 'fontWeight': 'bold'}
+                ),
 
-            # 4. 3D Structure Preview (버튼 복구됨)
-            html.Div([
-                html.Div([
-                    html.Span([html.Span("🧊"), " Structure"], style={'fontWeight': 'bold', 'fontSize': '0.95rem'}),
-                    html.Div([
-                        # [수정] 누락되었던 Top 버튼 복구 완료
-                        html.Button("Top", id="btn-view-top", className="btn-secondary", style={'fontSize':'0.7rem', 'padding':'2px 6px'}),
-                        html.Button("Iso", id="btn-view-iso", className="btn-secondary", style={'fontSize':'0.7rem', 'padding':'2px 6px', 'marginLeft': '2px'}),
-                        html.Button("Side", id="btn-view-side", className="btn-secondary", style={'fontSize':'0.7rem', 'padding':'2px 6px', 'marginLeft': '2px'}),
-                    ])
-                ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center', 'padding': '10px 15px', 'backgroundColor': '#f8fafc', 'borderBottom': '1px solid #e2e8f0'}),
-                
-                html.Div([
-                    dcc.Graph(
-                        id="film-3d-image",
-                        figure=generate_film_stack_figure(INITIAL_LAYERS),
-                        style={'width': '100%', 'height': '100%'},
-                        config={'displayModeBar': False, 'responsive': True}
-                    )
-                ], style={'flex': 1, 'position': 'relative', 'width': '100%', 'height': '100%'})
-            ], className="card-box flex-1"),
+                # [수정] Tab 2: AI Guess (AI 제안)
+                dcc.Tab(
+                    label='🤖 AI Guess', 
+                    children=[
+                        html.Div([
+                            html.Div("AI Predicted Structure:", style={'fontSize':'0.8rem', 'color':'#64748b', 'marginBottom':'5px'}),
+                            
+                            dash_table.DataTable(
+                                id='ai-results-table',
+                                columns=[
+                                    {'name': 'Mat', 'id': 'layer'},
+                                    {'name': 'd(Å)', 'id': 'thickness'},
+                                    {'name': 'ρ', 'id': 'density'},
+                                    {'name': 'σ', 'id': 'roughness'},
+                                ],
+                                data=[],
+                                style_cell={'textAlign': 'center', 'padding': '4px', 'fontSize': '0.8rem', 'color': '#64748b'},
+                                style_header={'backgroundColor': '#f0fdf4', 'fontWeight': 'bold', 'color': '#166534'},
+                                style_as_list_view=True
+                            ),
+                            html.Button("✅ Apply AI", id="btn-apply-ai", className="btn-primary", 
+                                        style={'marginTop': 'auto', 'backgroundColor': '#16a34a', 'padding': '8px'})
+                        ], style={'padding': '10px', 'display': 'flex', 'flexDirection': 'column', 'height': '100%'})
+                    ], 
+                    style={'borderBottom': '1px solid #e2e8f0'}, 
+                    selected_style={'borderBottom': '3px solid #16a34a', 'color': '#16a34a', 'fontWeight': 'bold'}
+                )
 
-            # 5. Fitted Parameters Table
-            html.Div([
-                html.H3([html.Span("📋"), " Parameters"]),
-                
-                html.Div([
-                    html.Div([
-                        dash_table.DataTable(
-                            id='final-params-table',
-                            columns=[
-                                {'name': 'Mat', 'id': 'layer'},
-                                {'name': 'd(Å)', 'id': 'thickness'},
-                                {'name': 'SLD', 'id': 'sld'},
-                                {'name': 'σ(Å)', 'id': 'roughness'},
-                            ],
-                            data=[], 
-                            style_cell={
-                                'textAlign': 'center', 'padding': '4px', 
-                                'fontFamily': 'Inter, sans-serif', 'fontSize': '0.8rem',
-                                'borderBottom': '1px solid #f1f5f9', 'color': '#334155'
-                            },
-                            style_header={
-                                'backgroundColor': '#ffffff', 'fontWeight': '700', 
-                                'borderBottom': '2px solid #e2e8f0', 'color': '#0f172a', 'fontSize': '0.75rem'
-                            },
-                            style_as_list_view=True
-                        )
-                    ], style={'flex': '1', 'overflowY': 'auto', 'marginBottom': '5px'}), 
+            ], style={'height': '40px'}, content_style={'flex': 1, 'display': 'flex', 'flexDirection': 'column'})
 
-                    html.Button("💾 Export", id="btn-export", className="btn-primary", style={'padding': '6px', 'fontSize': '0.85rem'})
-                ], style={'padding': '10px', 'display': 'flex', 'flexDirection': 'column', 'height': '100%'})
+        ], className="card-box", style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'minHeight': '300px'})
 
-            ], className="card-box flex-1"),
-
-        ], className="bottom-row")
-
-    ], className="main-content")
+    ], className="right-panel")

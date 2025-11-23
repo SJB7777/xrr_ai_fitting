@@ -1,5 +1,6 @@
 :root {
     --sidebar-width: 320px;
+    --right-panel-width: 500px;
     --header-height: 60px;
     --primary-color: #2563eb;     /* 좀 더 진한 신뢰감 있는 블루 */
     --primary-light: #eff6ff;
@@ -97,6 +98,31 @@ body {
     flex-shrink: 0;
     z-index: 40;
 }
+
+.center-panel {
+    flex: 1; 
+    padding: 20px;
+    background-color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    min-width: 0; 
+}
+
+.right-panel {
+    width: var(--right-panel-width);
+    background: var(--card-bg);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 20px;
+    gap: 20px;
+    overflow-y: auto;
+    z-index: 40;
+}
+
 .sidebar-section { padding: 20px; border-bottom: 1px solid var(--border-color); }
 .sidebar-title { 
     font-size: 0.75rem; font-weight: 800; color: var(--text-sub); 

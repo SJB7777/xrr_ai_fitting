@@ -4,9 +4,11 @@ from app.logic.materials import INITIAL_LAYERS, MATERIAL_DB
 def render_sidebar():
     return html.Div([
         
-        # 1. Data Upload (기존 동일)
+        # === 1. Data Source & Experimental Params ===
         html.Div([
             html.Div("1. Data Source", className="sidebar-title"),
+            
+            # (1) 파일 업로드
             dcc.Upload(
                 id='upload-data',
                 children=html.Div(['📂 Drag & Drop Data File']),
@@ -17,19 +19,46 @@ def render_sidebar():
                     'fontSize': '0.9rem', 'color': '#64748b', 'cursor': 'pointer'
                 }
             ),
-            html.Div(id='upload-status', style={'fontSize': '0.8rem', 'color': '#64748b', 'marginTop': '5px'})
+            html.Div(id='upload-status', style={'fontSize': '0.8rem', 'color': '#64748b', 'marginTop': '5px', 'marginBottom': '15px'}),
+
+            # (2) Beam Wavelength Input
+            html.Div([
+                html.Label("Beam Wavelength (λ)", style={'fontSize': '0.85rem', 'fontWeight': '600', 'color': '#334155'}),
+                
+                html.Div([
+                    dcc.Input(
+                        id='input-wavelength',
+                        type='number',
+                        value=1.5406,  # Default: Cu K-alpha
+                        step=0.0001,
+                        className='param-input',
+                        style={'flex': '1'}
+                    ),
+                    html.Span("Å", style={'padding': '8px', 'fontSize': '0.9rem', 'color': '#64748b', 'backgroundColor': '#f1f5f9', 'borderRadius': '4px'})
+                ], className="input-row", style={'alignItems': 'center'})
+                
+            ], style={'marginTop': '10px'}),
+            
+            html.Div("Default: Cu K-α (1.5406 Å)", style={'fontSize': '0.75rem', 'color': '#94a3b8', 'marginTop': '-5px'})
+
         ], className="sidebar-section"),
 
-        # 2. Material Library (기존 동일)
+
+        # === 2. Material Library ===
         html.Div([
-            html.Div("2. Materials (Click to Add)", className="sidebar-title"),
-            html.Div([
-                html.Div(mat["formula"], className="material-chip", id=f"mat-{mat['formula'].replace('₂','2').replace('₅','5')}")
+             html.Div("2. Materials (Click to Add)", className="sidebar-title"),
+             html.Div([
+                html.Div(
+                    mat["formula"], 
+                    className="material-chip", 
+                    id=f"mat-{mat['formula'].replace('₂','2').replace('₅','5')}"
+                )
                 for mat in MATERIAL_DB
             ], className="material-grid")
         ], className="sidebar-section"),
 
-        # 3. Layer Definition (수정됨)
+
+        # === 3. Structure Model ===
         html.Div([
             html.Div("3. Structure Model", className="sidebar-title"),
             
@@ -43,24 +72,19 @@ def render_sidebar():
                 ],
                 data=INITIAL_LAYERS,
                 row_deletable=True,
-                
                 style_as_list_view=True,
                 style_table={'fontSize': '0.8rem'},
                 style_header={'backgroundColor': '#f1f5f9', 'fontWeight': 'bold', 'padding': '5px'},
-                
-                # [중요] 기본 셀 스타일 (선택되지 않았을 때)
                 style_cell={
                     'padding': '5px', 
                     'textAlign': 'left',
-                    'border': '1px solid #f1f5f9', # 테두리를 옅게 줘서 점프 현상 완화
-                    'height': '30px' # 높이 고정
+                    'border': '1px solid #f1f5f9',
+                    'height': '30px'
                 },
-                
-                # 조건부 스타일은 이제 Callback에서 동적으로 제어합니다.
-                style_data_conditional=[] 
+                style_data_conditional=[]
             ),
 
-            # 컨트롤 버튼
+            # Layer Controls
             html.Div([
                 html.Button("＋ Add", id="btn-add-row", className="btn-secondary", style={'flex': 2}),
                 html.Button("▲", id="btn-move-up", className="btn-secondary", style={'flex': 1, 'marginLeft': '5px'}),
@@ -69,7 +93,8 @@ def render_sidebar():
 
         ], className="sidebar-section"),
 
-        # 4. Fitting Controls (기존 동일)
+
+        # === 4. Fitting Engine ===
         html.Div([
             html.Div("4. Fitting Engine", className="sidebar-title"),
             html.Button("🤖 Initialize AI Guess", id="btn-init-ai", className="btn-secondary"),

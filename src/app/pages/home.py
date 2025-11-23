@@ -1,10 +1,12 @@
+from pathlib import Path
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output, no_update
 
 dash.register_page(__name__, path="/")
 
 layout = html.Div(
     [
+        dcc.Download(id="download-sample-component"),
         html.Div(
             [
                 html.H1("XRR Automated Fitting", style={"fontSize": "3rem", "marginBottom": "20px", "color": "#1e293b"}),
@@ -20,9 +22,9 @@ layout = html.Div(
                         className="btn-primary",
                         style={"textDecoration": "none", "fontSize": "1.1rem", "padding": "15px 30px"}
                     ),
-                    html.A(
+                    html.Button(
                         "Download Sample Data",
-                        href="/assets/sample_data.txt",
+                        id="btn-download-sample",
                         className="btn-secondary",
                         style={"textDecoration": "none", "marginLeft": "15px", "padding": "15px 30px"}
                     )
@@ -53,3 +55,24 @@ layout = html.Div(
     className="home-container",
     style={"height": "100vh", "backgroundColor": "#f8fafc"}
 )
+
+@callback(
+    Output("download-sample-component", "data"),
+    Input("btn-download-sample", "n_clicks"),
+    prevent_initial_call=True
+)
+def download_sample(n_clicks):
+    if not n_clicks:
+        return no_update
+        
+
+    file_path = Path("data") / "example_xrr.dat"
+    
+    if not file_path.exists():
+        print(f"❌ Error: 파일을 찾을 수 없습니다. 경로를 확인하세요: {os.path.abspath(file_path)}")
+        return no_update
+
+    print(f"✅ Sending file: {file_path}")
+    
+    # 3. 파일 전송 (dcc.send_file 사용)
+    return dcc.send_file(file_path, "example.dat")
