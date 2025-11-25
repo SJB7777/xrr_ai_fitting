@@ -9,7 +9,8 @@ dash.register_page(__name__, path="/xrr_app")
 
 layout = html.Div([
     dcc.Store(id='xrr-data-store', storage_type='session'),
-
+    dcc.Store(id='ai-param-store', storage_type='memory'),
+    dcc.Store(id='fit-status-store', data=False, storage_type='memory'),
     html.Div([
         render_sidebar(),       # 1. 왼쪽 (입력)
         render_center_panel(),  # 2. 중앙 (그래프)

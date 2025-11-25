@@ -67,7 +67,7 @@ def render_sidebar():
                 columns=[
                     {'name': 'Mat', 'id': 'layer', 'editable': True},
                     {'name': 'd(nm)', 'id': 'thickness', 'type': 'numeric', 'editable': True},
-                    {'name': 'ρ', 'id': 'density', 'type': 'numeric', 'editable': True},
+                    {'name': 'ρ', 'id': 'sld', 'type': 'numeric', 'editable': True},
                     {'name': 'σ', 'id': 'roughness', 'type': 'numeric', 'editable': True},
                 ],
                 data=INITIAL_LAYERS,

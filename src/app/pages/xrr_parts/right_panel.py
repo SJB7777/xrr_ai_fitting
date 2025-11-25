@@ -43,7 +43,7 @@ def render_right_panel():
                                 columns=[
                                     {'name': 'Mat', 'id': 'layer'},
                                     {'name': 'd(Å)', 'id': 'thickness'},
-                                    {'name': 'ρ', 'id': 'density'},
+                                    {'name': 'ρ', 'id': 'sld'},
                                     {'name': 'σ', 'id': 'roughness'},
                                 ],
                                 data=[], 
@@ -70,7 +70,7 @@ def render_right_panel():
                                 columns=[
                                     {'name': 'Mat', 'id': 'layer'},
                                     {'name': 'd(Å)', 'id': 'thickness'},
-                                    {'name': 'ρ', 'id': 'density'},
+                                    {'name': 'ρ', 'id': 'sld'},
                                     {'name': 'σ', 'id': 'roughness'},
                                 ],
                                 data=[],

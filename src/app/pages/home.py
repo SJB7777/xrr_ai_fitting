@@ -66,7 +66,7 @@ def download_sample(n_clicks):
         return no_update
         
 
-    file_path = Path("data") / "example_xrr.dat"
+    file_path = Path("resource") / "example_xrr.dat"
     
     if not file_path.exists():
         print(f"❌ Error: 파일을 찾을 수 없습니다. 경로를 확인하세요: {os.path.abspath(file_path)}")
