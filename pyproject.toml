@@ -1,5 +1,5 @@
 [project]
-name = "xrr-ai-fitting"
+name = "reflecto_ai"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -12,7 +12,7 @@ dependencies = [
     "pandas>=2.3.3",
     "dash-table>=5.0.0",
     "scipy>=1.16.3",
-    "reflecto",
+    "reflecto-backend",
 ]
 
 [dependency-groups]
@@ -21,4 +21,5 @@ dev = [
 ]
 
 [tool.uv.sources]
-reflecto = { path = "../../X-ray_AI/Reflecto" }
+reflecto-backend = { git = "https://github.com/SJB7777/reflecto_backend" }
+

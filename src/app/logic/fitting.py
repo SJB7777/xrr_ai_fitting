@@ -2,7 +2,6 @@ import numpy as np
 from scipy.optimize import least_squares
 from reflecto.simulate.simul_genx import param2refl, ParamSet
 
-
 def run_fitting_algorithm(current_layers, q_exp, I_exp, wavelength):
     """
     [Fitting Engine]
@@ -10,14 +9,13 @@ def run_fitting_algorithm(current_layers, q_exp, I_exp, wavelength):
     """
     print("🚀 Starting Fitting Process...")
 
+    # [수정] 실험 데이터의 스케일 팩터 계산 (Max Value)
+    scale_factor = np.max(I_exp) if len(I_exp) > 0 else 1.0
+
     # 1. 파라미터 추출 (Dict -> Flat Array)
-    # 최적화 대상: 각 층의 두께(t), 밀도(d), 거칠기(r)
-    # 단, 기판(Substrate)의 두께는 무한대이므로 제외합니다.
     p0 = []
     bounds_min = []
     bounds_max = []
-    
-    # 파라미터가 어느 레이어의 어떤 속성인지 추적하기 위한 매핑
     param_map = [] 
 
     for i, layer in enumerate(current_layers):
@@ -26,15 +24,15 @@ def run_fitting_algorithm(current_layers, q_exp, I_exp, wavelength):
             val = float(layer.get("thickness", 10))
             p0.append(val)
             param_map.append((i, "thickness"))
-            bounds_min.append(0.0)    # 두께 최소값
-            bounds_max.append(5000.0) # 두께 최대값
+            bounds_min.append(0.0)
+            bounds_max.append(5000.0)
 
-        # (2) sld
-        val_d = float(layer.get("sld", 2.33))
-        p0.append(val_d)
+        # (2) SLD (Density 대신 SLD 사용)
+        val_s = float(layer.get("sld", 2.0))
+        p0.append(val_s)
         param_map.append((i, "sld"))
         bounds_min.append(0.0)
-        bounds_max.append(30.0) # 밀도 최대값
+        bounds_max.append(50.0) 
 
         # (3) Roughness
         val_r = float(layer.get("roughness", 0.3))
@@ -45,46 +43,58 @@ def run_fitting_algorithm(current_layers, q_exp, I_exp, wavelength):
 
     # 2. Cost Function 정의
     def residuals(p):
-        # (A) 파라미터 복원 (Array -> Layers)
+        # (A) 파라미터 복원
         temp_layers = [L.copy() for L in current_layers]
         for idx, val in enumerate(p):
             layer_idx, key = param_map[idx]
             temp_layers[layer_idx][key] = val
 
-        # (B) 시뮬레이션 계산 (사용자분의 피팅 함수 연결)
-        # ====================================================
-        # 👇 [사용자 정의 영역] 가지고 계신 시뮬레이션 함수를 여기에 넣으세요!
-        # I_sim = my_custom_xrr_simulation(temp_layers, q_exp, wavelength)
-        # ====================================================
+        # (B) 시뮬레이션 계산 (Normalized 0~1)
+        I_sim_norm = calculate_xrr_simulation(q_exp, temp_layers)
         
-        # [임시] 데모용 약식 시뮬레이션 (교체 필요)
-        # (실제 코드가 없으면 에러가 나므로 임시 로직을 넣었습니다)
-        I_sim = calculate_xrr_simulation(q_exp, temp_layers)
+        # [수정] 스케일 적용 (Normalized * Scale Factor)
+        I_sim_scaled = I_sim_norm * scale_factor
         
-        # (C) 잔차 계산 (Log scale 차이)
-        # 0이나 음수 방지를 위해 log10 적용 전 abs 및 epsilon 추가
-        diff = np.log10(np.abs(I_exp) + 1e-10) - np.log10(np.abs(I_sim) + 1e-10)
+        # (C) 잔차 계산 (Log scale)
+        diff = np.log10(np.abs(I_exp) + 1e-10) - np.log10(np.abs(I_sim_scaled) + 1e-10)
         return diff
 
-    # 3. 최적화 실행 (Levenberg-Marquardt or TRF)
-    res = least_squares(residuals, p0, bounds=(bounds_min, bounds_max), method='trf', ftol=1e-3)
+    # 3. 최적화 실행
+    try:
+        res = least_squares(residuals, p0, bounds=(bounds_min, bounds_max), method='trf', ftol=1e-3)
+        
+        # 4. 결과 적용
+        fitted_layers = [L.copy() for L in current_layers]
+        for idx, val in enumerate(res.x):
+            layer_idx, key = param_map[idx]
+            fitted_layers[layer_idx][key] = float(val) # float 변환
 
-    # 4. 결과 적용 (Flat Array -> Dict List)
-    fitted_layers = [L.copy() for L in current_layers]
-    for idx, val in enumerate(res.x):
-        layer_idx, key = param_map[idx]
-        # 소수점 포맷팅
-        fitted_layers[layer_idx][key] = f"{val:.2f}"
-
-    print("✅ Fitting Complete!")
-    return fitted_layers
-
+        print("✅ Fitting Complete!")
+        return fitted_layers
+    except Exception as e:
+        print(f"❌ Fitting Failed: {e}")
+        return current_layers
 
 def calculate_xrr_simulation(q, layers):
-
+    # utils의 함수와 비슷하지만, fitting 내부에서 빠르게 돌기 위해 재정의하거나 import해서 사용
+    # 여기서는 직접 구현
+    params = []
+    sio2_param = None
+    
     for layer in layers:
-        if layer["layer"] == "Film":
-            params = [ParamSet(layer["thickness"], layer["roughness"], layer["sld"])]
-        elif layer["layer"] == "SiO₂":
-            sio2_param = ParamSet(layer["thickness"], layer["roughness"], layer["sld"])
+        try:
+            t = float(layer.get("thickness", 0)) if str(layer.get("thickness")) not in ["∞", "?"] else 0
+            r = float(layer.get("roughness", 0))
+            s = float(layer.get("sld", 0))
+            
+            name = layer.get("layer", "")
+            if "Film" in name:
+                params.append(ParamSet(t, r, s))
+            elif "SiO" in name:
+                sio2_param = ParamSet(t, r, s)
+        except: continue
+
+    if not params or sio2_param is None:
+        return np.zeros_like(q)
+        
     return param2refl(q, params, sio2_param)
